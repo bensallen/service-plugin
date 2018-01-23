@@ -1,12 +1,12 @@
-package servicer
+package service
 
 import (
 	"net/rpc"
 
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/u-root/service-plugin/pkg/servicer/onfail"
-	"github.com/u-root/service-plugin/pkg/servicer/state"
+	"github.com/u-root/service-plugin/pkg/service/onfail"
+	"github.com/u-root/service-plugin/pkg/service/state"
 )
 
 type Unit struct {

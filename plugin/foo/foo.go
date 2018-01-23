@@ -6,16 +6,16 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/u-root/service-plugin/pkg/servicer"
-	"github.com/u-root/service-plugin/pkg/servicer/onfail"
-	"github.com/u-root/service-plugin/pkg/servicer/state"
+	"github.com/u-root/service-plugin/pkg/service"
+	"github.com/u-root/service-plugin/pkg/service/onfail"
+	"github.com/u-root/service-plugin/pkg/service/state"
 )
 
 // foo is a bar
-type foo servicer.Unit
+type foo service.Unit
 
 //New returns a service.Unit of foo
-func New() servicer.Servicer {
+func New() service.Servicer {
 
 	logger := hclog.New(&hclog.LoggerOptions{
 		Level:      hclog.Trace,
@@ -26,7 +26,7 @@ func New() servicer.Servicer {
 	return &foo{
 		Name:            "foo",
 		Description:     "foo does all of the bar",
-		Type:            servicer.Simple,
+		Type:            service.Simple,
 		OnFail:          onfail.Restart,
 		Before:          []string{},
 		After:           []string{},
@@ -38,8 +38,8 @@ func New() servicer.Servicer {
 	}
 }
 
-func (f *foo) Unit() servicer.Unit {
-	return servicer.Unit(*f)
+func (f *foo) Unit() service.Unit {
+	return service.Unit(*f)
 }
 
 func (f *foo) Start() error {
@@ -96,7 +96,7 @@ func main() {
 
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		"foo": &servicer.ServicerPlugin{Impl: foo},
+		"foo": &service.ServicerPlugin{Impl: foo},
 	}
 
 	logger.Debug("message from plugin", "foo", "bar")

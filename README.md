@@ -1,0 +1,2 @@
+- Build plugin: `go build -o plugin/foo/foo plugin/foo/foo.go`
+- Run demo: `go run init.go`

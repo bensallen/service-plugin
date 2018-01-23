@@ -8,7 +8,7 @@ import (
 
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/u-root/service-plugin/pkg/servicer"
+	"github.com/u-root/service-plugin/pkg/service"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
-		Cmd:             exec.Command("./plugin/foo"),
+		Cmd:             exec.Command("./plugin/foo/foo"),
 		Logger:          logger,
 	})
 	defer client.Kill()
@@ -42,7 +42,7 @@ func main() {
 
 	// We should have a Greeter now! This feels like a normal interface
 	// implementation but is in fact over an RPC connection.
-	foo := raw.(servicer.Servicer)
+	foo := raw.(service.Servicer)
 
 	err = foo.Start()
 	if err != nil {
@@ -81,5 +81,5 @@ var handshakeConfig = plugin.HandshakeConfig{
 
 // pluginMap is the map of plugins we can dispense.
 var pluginMap = map[string]plugin.Plugin{
-	"foo": &servicer.ServicerPlugin{},
+	"foo": &service.ServicerPlugin{},
 }
