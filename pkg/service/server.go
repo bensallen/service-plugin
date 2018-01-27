@@ -1,13 +1,7 @@
-package server
-
-import (
-	"fmt"
-
-	"github.com/u-root/service-plugin/pkg/service"
-)
+package service
 
 type ServicerRPCServer struct {
-	Impl service.Servicer
+	Impl Servicer
 }
 
 func (s *ServicerRPCServer) Start(args interface{}, resp *string) error {
@@ -30,9 +24,8 @@ func (s *ServicerRPCServer) Status(args interface{}, resp *string) error {
 	return s.Impl.Status()
 }
 
-func (s *ServicerRPCServer) Unit(args interface{}, resp *service.Unit) error {
+func (s *ServicerRPCServer) Unit(args interface{}, resp *Unit) error {
 	u := s.Impl.Unit()
-	fmt.Printf("%#v\n", u)
-	resp = &u
+	*resp = u
 	return nil
 }

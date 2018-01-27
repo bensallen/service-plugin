@@ -1,9 +1,7 @@
-package client
+package service
 
 import (
 	"net/rpc"
-
-	"github.com/u-root/service-plugin/pkg/service"
 )
 
 // ServicerRPC is an implemtation of Servicer over RPC
@@ -34,8 +32,8 @@ func (s *ServicerRPC) Status() error {
 	return s.Client.Call("Plugin.Status", new(interface{}), &resp)
 }
 
-func (s *ServicerRPC) Unit() service.Unit {
-	var u service.Unit
+func (s *ServicerRPC) Unit() Unit {
+	var u Unit
 	err := s.Client.Call("Plugin.Unit", new(interface{}), &u)
 	if err != nil {
 		panic(err)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/hashicorp/go-hclog"
@@ -9,7 +8,6 @@ import (
 	"github.com/u-root/service-plugin/pkg/service"
 	"github.com/u-root/service-plugin/pkg/service/onfail"
 	"github.com/u-root/service-plugin/pkg/service/state"
-	"github.com/u-root/service-plugin/pkg/service/wrapper"
 )
 
 // foo is a bar
@@ -17,12 +15,6 @@ type foo service.Unit
 
 //New returns a service.Unit of foo
 func New() service.Servicer {
-
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
 
 	return &foo{
 		Name:            "foo",
@@ -35,7 +27,6 @@ func New() service.Servicer {
 		EnvironmentFile: "",
 		PIDFile:         "",
 		State:           state.Unknown,
-		Logger:          logger,
 	}
 }
 
@@ -44,14 +35,14 @@ func (f *foo) Unit() service.Unit {
 }
 
 func (f *foo) Start() error {
-	f.Logger.Debug("Hello world")
+	//f.Logger.Debug("Hello world")
 	f.State = state.Starting
 
 	return nil
 }
 
 func (f *foo) Stop() error {
-	f.Logger.Debug("Goodbye world")
+	//f.Logger.Debug("Goodbye world")
 	f.State = state.Stopping
 
 	return nil
@@ -71,22 +62,29 @@ func (f *foo) Reload() error {
 }
 
 func (f *foo) Status() error {
-	f.Logger.Debug(fmt.Sprintf("Foo is %v", f.State))
+	//f.Logger.Debug(fmt.Sprintf("Foo is %v", f.State))
 	return nil
 
 }
 
 func main() {
 
+	var logger = hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Trace,
+		Output:     os.Stderr,
+		JSONFormat: true,
+	})
+
 	foo := New()
 
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		"foo": &wrapper.ServicerWrapper{Impl: foo},
+		"foo": &service.Wrapper{Impl: foo},
 	}
 
 	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: wrapper.HandshakeConfig,
+		HandshakeConfig: service.HandshakeConfig,
 		Plugins:         pluginMap,
+		Logger:          logger,
 	})
 }

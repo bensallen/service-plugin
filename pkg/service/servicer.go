@@ -1,7 +1,6 @@
 package service
 
 import (
-	hclog "github.com/hashicorp/go-hclog"
 	"github.com/u-root/service-plugin/pkg/service/onfail"
 	"github.com/u-root/service-plugin/pkg/service/state"
 )
@@ -27,7 +26,6 @@ type Unit struct {
 	Before          []string
 	After           []string
 	Requires        []string
-	Logger          hclog.Logger
 }
 
 type Type int

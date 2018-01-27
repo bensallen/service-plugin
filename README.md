@@ -1,2 +1,2 @@
-- Build plugin: `go build -o plugin/foo/foo plugin/foo/foo.go`
+- Build plugin: `go build -o service/foo/foo service/foo/foo.go`
 - Run demo: `go run init.go`

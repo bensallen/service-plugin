@@ -5,12 +5,26 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/u-root/service-plugin/pkg/service"
-	"github.com/u-root/service-plugin/pkg/service/wrapper"
 )
+
+func discover() (map[string]plugin.Plugin, error) {
+	services, err := plugin.Discover("*", "./services/bin")
+	if err != nil {
+		return nil, err
+	}
+	var serviceMap = map[string]plugin.Plugin{}
+
+	for _, serviceBin := range services {
+		serviceMap[filepath.Base(serviceBin)] = &service.Wrapper{}
+	}
+
+	return serviceMap, nil
+}
 
 func main() {
 	// Create an hclog.Logger
@@ -22,9 +36,9 @@ func main() {
 
 	// We're a host! Start by launching the plugin process.
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: wrapper.HandshakeConfig,
+		HandshakeConfig: service.HandshakeConfig,
 		Plugins:         pluginMap,
-		Cmd:             exec.Command("./plugin/foo/foo"),
+		Cmd:             exec.Command("./services/bin/foo"),
 		Logger:          logger,
 	})
 	defer client.Kill()
@@ -71,5 +85,5 @@ func main() {
 
 // pluginMap is the map of plugins we can dispense.
 var pluginMap = map[string]plugin.Plugin{
-	"foo": &wrapper.ServicerWrapper{},
+	"foo": &service.Wrapper{},
 }
