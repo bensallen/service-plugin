@@ -38,6 +38,33 @@ func discover(path string, logger hclog.Logger) (map[string]*plugin.ClientConfig
 	return configs, nil
 }
 
+func exercise(logger hclog.Logger, servicers map[string]service.Servicer) error {
+	for name, svcr := range servicers {
+		u := svcr.Unit()
+		logger.Debug(fmt.Sprintf("Exercising %s unit: %#v", name, u))
+
+		if err := svcr.Start(); err != nil {
+			return fmt.Errorf("%s failed to start", name)
+		}
+
+		logger.Debug(fmt.Sprintf("After Start, state of %s is: %v", name, svcr.Status()))
+
+		if err := svcr.Stop(); err != nil {
+			return fmt.Errorf("%s failed to stop", name)
+		}
+
+		logger.Debug(fmt.Sprintf("After Stop, state of %s is: %v", name, svcr.Status()))
+
+		if err := svcr.Restart(); err != nil {
+			return fmt.Errorf("%s failed to restart", name)
+		}
+
+		logger.Debug(fmt.Sprintf("After Restart, state of %s is: %v", name, svcr.Status()))
+
+	}
+	return nil
+}
+
 func main() {
 	// Create an hclog.Logger
 	logger := hclog.New(&hclog.LoggerOptions{
@@ -52,6 +79,9 @@ func main() {
 		fmt.Printf("Service binary discover failed: %v\n", err)
 	}
 
+	var servicers = map[string]service.Servicer{}
+
+	// Launch and connect to each service binary
 	for name, config := range configs {
 		client := plugin.NewClient(config)
 		defer client.Kill()
@@ -68,35 +98,17 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// Cast back to a Servicer
-		svcr := raw.(service.Servicer)
-
-		err = svcr.Start()
-		if err != nil {
-			logger.Error(fmt.Sprintf("%s failed to start", name))
+		// Cast to a Servicer
+		if svcr, ok := raw.(service.Servicer); ok {
+			servicers[name] = svcr
+		} else {
+			logger.Error(fmt.Sprintf("%s failed to launch", name))
 		}
-
-		err = svcr.Stop()
-		if err != nil {
-			logger.Error(fmt.Sprintf("%s failed to stop", name))
-			logger.Error("Foo failed to stop")
-		}
-
-		err = svcr.Restart()
-		if err != nil {
-			logger.Error(fmt.Sprintf("%s failed to restart", name))
-		}
-
-		err = svcr.Status()
-		if err != nil {
-			logger.Error(fmt.Sprintf("%s failed to get status", name))
-		}
-
-		u := svcr.Unit()
-
-		logger.Debug(fmt.Sprintf("%s unit: %#v", name, u))
-
 	}
-	// We're a host! Start by launching the plugin process.
+
+	err = exercise(logger, servicers)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
