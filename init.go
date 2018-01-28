@@ -12,18 +12,30 @@ import (
 	"github.com/u-root/service-plugin/pkg/service"
 )
 
-func discover() (map[string]plugin.Plugin, error) {
-	services, err := plugin.Discover("*", "./services/bin")
+func discover(path string, logger hclog.Logger) (map[string]*plugin.ClientConfig, error) {
+	services, err := plugin.Discover("*", path)
 	if err != nil {
 		return nil, err
 	}
-	var serviceMap = map[string]plugin.Plugin{}
 
-	for _, serviceBin := range services {
-		serviceMap[filepath.Base(serviceBin)] = &service.Wrapper{}
+	configs := map[string]*plugin.ClientConfig{}
+
+	for _, bin := range services {
+
+		name := filepath.Base(bin)
+		pluginMap := map[string]plugin.Plugin{
+			name: &service.Wrapper{},
+		}
+
+		configs[name] = &plugin.ClientConfig{
+			HandshakeConfig: service.HandshakeConfig,
+			Plugins:         pluginMap,
+			Cmd:             exec.Command(bin),
+			Logger:          logger,
+		}
 	}
 
-	return serviceMap, nil
+	return configs, nil
 }
 
 func main() {
@@ -34,56 +46,57 @@ func main() {
 		Level:  hclog.Debug,
 	})
 
+	configs, err := discover("./services/bin", logger)
+
+	if err != nil {
+		fmt.Printf("Service binary discover failed: %v\n", err)
+	}
+
+	for name, config := range configs {
+		client := plugin.NewClient(config)
+		defer client.Kill()
+
+		// Connect via RPC
+		rpcClient, err := client.Client()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Request the plugin
+		raw, err := rpcClient.Dispense(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Cast back to a Servicer
+		svcr := raw.(service.Servicer)
+
+		err = svcr.Start()
+		if err != nil {
+			logger.Error(fmt.Sprintf("%s failed to start", name))
+		}
+
+		err = svcr.Stop()
+		if err != nil {
+			logger.Error(fmt.Sprintf("%s failed to stop", name))
+			logger.Error("Foo failed to stop")
+		}
+
+		err = svcr.Restart()
+		if err != nil {
+			logger.Error(fmt.Sprintf("%s failed to restart", name))
+		}
+
+		err = svcr.Status()
+		if err != nil {
+			logger.Error(fmt.Sprintf("%s failed to get status", name))
+		}
+
+		u := svcr.Unit()
+
+		logger.Debug(fmt.Sprintf("%s unit: %#v", name, u))
+
+	}
 	// We're a host! Start by launching the plugin process.
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: service.HandshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command("./services/bin/foo"),
-		Logger:          logger,
-	})
-	defer client.Kill()
 
-	// Connect via RPC
-	rpcClient, err := client.Client()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Request the plugin
-	raw, err := rpcClient.Dispense("foo")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Cast back to a Servicer
-	foo := raw.(service.Servicer)
-
-	err = foo.Start()
-	if err != nil {
-		logger.Error("Foo failed to start")
-	}
-
-	err = foo.Stop()
-	if err != nil {
-		logger.Error("Foo failed to stop")
-	}
-
-	err = foo.Restart()
-	if err != nil {
-		logger.Error("Foo failed to restart")
-	}
-
-	err = foo.Status()
-	if err != nil {
-		logger.Error("Foo failed to get status")
-	}
-
-	u := foo.Unit()
-	fmt.Printf("Foo Unit: %#v\n", u)
-
-}
-
-// pluginMap is the map of plugins we can dispense.
-var pluginMap = map[string]plugin.Plugin{
-	"foo": &service.Wrapper{},
 }
