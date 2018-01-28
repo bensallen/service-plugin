@@ -11,7 +11,7 @@ type Servicer interface {
 	Stop() error
 	Reload() error
 	Restart() error
-	Status() error
+	Status() state.Value
 	Unit() Unit
 }
 

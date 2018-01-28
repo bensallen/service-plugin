@@ -61,10 +61,8 @@ func (b *bar) Reload() error {
 	return nil
 }
 
-func (b *bar) Status() error {
-	//f.Logger.Debug(fmt.Sprintf("Foo is %v", f.State))
-	return nil
-
+func (b *bar) Status() state.Value {
+	return b.State
 }
 
 func main() {
