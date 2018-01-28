@@ -11,57 +11,57 @@ import (
 )
 
 // foo is a bar
-type foo service.Unit
+type bar service.Unit
 
 //New returns a service.Unit of foo
 func New() service.Servicer {
 
-	return &foo{
-		Name:            "foo",
-		Description:     "foo does all of the bar",
+	return &bar{
+		Name:            "bar",
+		Description:     "bar does all of the foo",
 		Type:            service.Simple,
 		OnFail:          onfail.Restart,
 		Before:          []string{},
 		After:           []string{},
 		Requires:        []string{},
 		Enabled:         true,
-		EnvironmentFile: "/etc/service.d/foo.conf",
+		EnvironmentFile: "/etc/service.d/bar.conf",
 		State:           state.Unknown,
 	}
 }
 
-func (f *foo) Unit() service.Unit {
-	return service.Unit(*f)
+func (b *bar) Unit() service.Unit {
+	return service.Unit(*b)
 }
 
-func (f *foo) Start() error {
+func (b *bar) Start() error {
 	//f.Logger.Debug("Hello world")
-	f.State = state.Starting
+	b.State = state.Starting
 
 	return nil
 }
 
-func (f *foo) Stop() error {
+func (b *bar) Stop() error {
 	//f.Logger.Debug("Goodbye world")
-	f.State = state.Stopping
+	b.State = state.Stopping
 
 	return nil
 }
 
-func (f *foo) Restart() error {
-	f.Stop()
-	f.Start()
+func (b *bar) Restart() error {
+	b.Stop()
+	b.Start()
 
 	return nil
 }
 
-func (f *foo) Reload() error {
-	f.Restart()
+func (b *bar) Reload() error {
+	b.Restart()
 
 	return nil
 }
 
-func (f *foo) Status() error {
+func (b *bar) Status() error {
 	//f.Logger.Debug(fmt.Sprintf("Foo is %v", f.State))
 	return nil
 
@@ -75,11 +75,11 @@ func main() {
 		JSONFormat: true,
 	})
 
-	foo := New()
+	bar := New()
 
 	// pluginMap is the map of plugins we can dispense.
 	var pluginMap = map[string]plugin.Plugin{
-		"foo": &service.Wrapper{Impl: foo},
+		"bar": &service.Wrapper{Impl: bar},
 	}
 
 	plugin.Serve(&plugin.ServeConfig{
