@@ -16,16 +16,16 @@ type Servicer interface {
 }
 
 type Unit struct {
-	Name            string
-	Description     string
-	EnvironmentFile string
-	PIDFile         string
-	Type            Type
-	OnFail          onfail.Action
-	State           state.Value
-	Before          []string
-	After           []string
-	Requires        []string
+	Name            string        // Name of service
+	Description     string        // Description of service
+	EnvironmentFile string        // File to source for overriding settings
+	Type            Type          // Type of service
+	OnFail          onfail.Action // Specified action if the service exists unexpectedly
+	Enabled         bool          // Service enabled
+	State           state.Value   // Current state of service
+	Before          []string      // Start this service before specified services
+	After           []string      // Start this service after specified services
+	Requires        []string      // Start this service if specified services have successfully started
 }
 
 type Type int
