@@ -28,3 +28,12 @@
 [[constraint]]
   branch = "master"
   name = "github.com/hashicorp/go-plugin"
+
+[[constraint]]
+  name = "github.com/deckarep/golang-set"
+  version = "1.7.0"
+
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true
