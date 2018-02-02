@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -12,6 +13,12 @@ import (
 
 // foo is a bar
 type foo service.Unit
+
+var logger = hclog.New(&hclog.LoggerOptions{
+	Level:      hclog.Trace,
+	Output:     os.Stderr,
+	JSONFormat: true,
+})
 
 //New returns a service.Unit of foo
 func New() service.Servicer {
@@ -35,14 +42,15 @@ func (f *foo) Unit() service.Unit {
 }
 
 func (f *foo) Start() error {
-	//f.Logger.Debug("Hello world")
+	time.Sleep(5 * time.Second)
+	logger.Debug("Hello world")
 	f.State = state.Starting
 
 	return nil
 }
 
 func (f *foo) Stop() error {
-	//f.Logger.Debug("Goodbye world")
+	logger.Debug("Goodbye world")
 	f.State = state.Stopping
 
 	return nil
@@ -67,12 +75,6 @@ func (f *foo) Status() state.Value {
 }
 
 func main() {
-
-	var logger = hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
 
 	foo := New()
 
