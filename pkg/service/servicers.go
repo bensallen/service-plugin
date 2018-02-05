@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/u-root/service-plugin/pkg/service/state"
+
 	"github.com/u-root/service-plugin/pkg/graph"
 )
 
@@ -47,7 +49,15 @@ func (s Servicers) DependencyGraph() (*graph.Graph, error) {
 				return g, fmt.Errorf("%s wants to start after %s, which does not exist", id, dep)
 			}
 			g.AddEdge(nodes[id], nodes[dep])
+		}
 
+		// Create edges between the service and the ones
+		// it requires to run.
+		for _, dep := range u.Requires {
+			if _, ok := s.Lookup[dep]; !ok {
+				return g, fmt.Errorf("%s wants to start after %s, which does not exist", id, dep)
+			}
+			g.AddEdge(nodes[id], nodes[dep])
 		}
 
 		// Create edges between the service and the ones
@@ -82,11 +92,20 @@ func (s *Servicers) StartAll() error {
 
 	// Process the Servicers
 	for _, node := range s.Sorted {
-		svcr := s.Lookup[node.Name]
+		svcr, ok := s.Lookup[node.Name]
+		if !ok {
+			return fmt.Errorf("Attempted to lookup %s from the graph, but couldn't find it in Servicers.Lookup", node.Name)
+		}
 		u := svcr.Unit()
+
+		if err := s.checkRequires(node, u.Requires); err != nil {
+			u.State = state.FailedRequire
+			continue
+		}
+
 		switch {
 		// Servicer is an isolated node
-		case len(u.After) == 0 && len(s.Reversed.Nodes[u.Name].Edges) == 0:
+		case len(u.After) == 0 && len(u.Requires) == 0 && len(s.Reversed.Nodes[u.Name].Edges) == 0:
 			ch <- svcr
 			//fmt.Printf("Servicer: %s is an isolated node\n", u.Name)
 			continue
@@ -105,5 +124,20 @@ func (s *Servicers) StartAll() error {
 	close(ch)
 	wg.Wait()
 
+	return nil
+}
+
+func (s *Servicers) checkRequires(node *graph.Node, requires []string) error {
+	for _, r := range requires {
+		svc, ok := s.Lookup[r]
+		if !ok {
+			return fmt.Errorf("Service %s requires %s, but it could not be found", node.Name, r)
+		}
+		u := svc.Unit()
+		if u.State != state.Active {
+			return fmt.Errorf("Service %s requires %s, and its state is %s instead of active", node.Name, r, u.State)
+		}
+		return nil
+	}
 	return nil
 }
