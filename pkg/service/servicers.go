@@ -74,7 +74,6 @@ func (s *Servicers) StartAll() error {
 		worker := func() {
 			defer wg.Done()
 			for svc := range ch {
-				fmt.Printf("In worker\n")
 				svc.Start()
 			}
 		}
